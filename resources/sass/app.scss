@@ -1,0 +1,20 @@
+//
+// Theme
+//
+
+@import '~bootswatch/dist/sketchy/variables';
+@import '~bootstrap/scss/bootstrap';
+@import '~bootswatch/dist/sketchy/bootswatch';
+
+@include media-breakpoint-between(xs,xs){
+  .btn {
+      @include button-size($input-btn-padding-y-sm, $input-btn-padding-x-sm, $font-size-sm, $line-height-sm, $btn-border-radius-sm);
+  }
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to {
+    opacity: 0;
+}
