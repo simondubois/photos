@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Collections\PhotoCollection;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,6 +14,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(PhotoCollection::class, function () {
+            return with(new PhotoCollection())->fromPath(env('PHOTOS_ROOT'));
+        });
     }
 }
