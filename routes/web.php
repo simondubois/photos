@@ -1,6 +1,7 @@
 <?php
 
 use App\Collections\PhotoCollection;
+use Carbon\Carbon;
 use Illuminate\Contracts\Console\Kernel;
 
 /*
@@ -13,6 +14,13 @@ use Illuminate\Contracts\Console\Kernel;
 | and give it the Closure to call when that URI is requested.
 |
 */
+
+$router->get('/', function (PhotoCollection $photos) {
+    return view('home', [
+        'minDate' => $photos->min('date') ?? Carbon::today(),
+        'maxDate' => min($photos->max('date'), Carbon::today()) ?? Carbon::today(),
+    ]);
+});
 
 $router->get('feed', function (PhotoCollection $photos) {
     return $photos->toRss();
