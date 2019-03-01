@@ -1,6 +1,7 @@
 <?php
 
 use App\Collections\PhotoCollection;
+use Illuminate\Contracts\Console\Kernel;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,4 +29,12 @@ $router->get('{year}/{month}/{day}', function (PhotoCollection $photos, $year, $
         ->where('day', $day)
         ->where('year', $year)
         ->where('month', $month);
+});
+
+$router->get('seed', function () {
+    if (env('APP_ENV') !== 'demo') {
+        abort(404);
+    }
+    app(Kernel::class)->call('photo:seed');
+    return app(Kernel::class)->output();
 });
