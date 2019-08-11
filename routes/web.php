@@ -14,6 +14,10 @@ use Illuminate\Contracts\Console\Kernel;
 |
 */
 
+$router->get('feed', function (PhotoCollection $photos) {
+    return $photos->toRss();
+});
+
 $router->get('random', function (PhotoCollection $photos) {
     return $photos;
 });

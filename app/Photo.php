@@ -5,6 +5,9 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Responsable;
 use Intervention\Image\ImageManager;
+use MarcW\RssWriter\Extension\Core\Enclosure;
+use MarcW\RssWriter\Extension\Core\Guid;
+use MarcW\RssWriter\Extension\Core\Item;
 
 class Photo implements Responsable
 {
@@ -19,6 +22,8 @@ class Photo implements Responsable
         $this->name = pathinfo($path, PATHINFO_FILENAME);
         [$this->year, $this->month, $this->day] = array_map('intval', explode('-', $this->name));
         $this->date = Carbon::createFromDate($this->year, $this->month, $this->day)->startOfDay();
+        $this->title = $this->date->formatLocalized('%A %e %B %Y');
+        $this->url = url($this->year . '/' . $this->month . '/' . $this->day);
     }
 
     /**
@@ -50,5 +55,20 @@ class Photo implements Responsable
             'Cache-control' => 'private, max-age=604800',
             'Content-type' => 'image/jpeg',
         ]);
+    }
+
+    /**
+     * Get the RSS representation of the photo.
+     *
+     * @return MarcW\RssWriter\Extension\Core\Item
+     */
+    public function toRss() : Item
+    {
+        return with(new Item())
+            ->setTitle($this->title)
+            ->setLink(url())
+            ->setDescription('<img src="' . $this->url . '">')
+            ->setPubDate($this->date)
+            ->setGuid((new Guid())->setGuid($this->date));
     }
 }

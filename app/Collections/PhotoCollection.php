@@ -6,6 +6,13 @@ use App\Photo;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use MarcW\RssWriter\Bridge\Symfony\HttpFoundation\RssStreamedResponse;
+use MarcW\RssWriter\Extension\Atom\AtomLink;
+use MarcW\RssWriter\Extension\Atom\AtomWriter;
+use MarcW\RssWriter\Extension\Core\Channel;
+use MarcW\RssWriter\Extension\Core\CoreWriter;
+use MarcW\RssWriter\Extension\Core\Image;
+use MarcW\RssWriter\RssWriter;
 
 class PhotoCollection extends Collection implements Responsable
 {
@@ -32,7 +39,7 @@ class PhotoCollection extends Collection implements Responsable
     }
 
     /**
-     * Get an HTTP response containing the photo.
+     * Get the HTTP response for one of the random photo in the collection.
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
@@ -46,5 +53,42 @@ class PhotoCollection extends Collection implements Responsable
         }
 
         return $this->random()->toResponse($request);
+    }
+
+    /**
+     * Get an HTTP response representing the collection as a RSS feed.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function toRss()
+    {
+        $rssWriter = new RssWriter(null, [], true);
+        $rssWriter->registerWriter(new AtomWriter());
+        $rssWriter->registerWriter(new CoreWriter());
+
+        $channel = new Channel();
+        $channel->setTitle(env('APP_NAME'));
+        $channel->setLink(url());
+        $channel->setLastBuildDate(optional($this->last())->date);
+        $channel->addExtension(
+            with(new AtomLink())->setRel('self')->setHref(url('feed'))->setType('application/rss+xml')
+        );
+
+        $channel->setImage(
+            with(new Image())
+                ->setTitle(env('APP_NAME'))
+                ->setUrl(url('logo-large.png'))
+                ->setLink(url())
+        );
+
+        $this
+            ->reverse()
+            ->take(env('FEED_LENGTH'))
+            ->map(function (Photo $photo) {
+                return $photo->toRss();
+            })
+            ->each([$channel, 'addItem']);
+
+        return new RssStreamedResponse($channel, $rssWriter);
     }
 }
