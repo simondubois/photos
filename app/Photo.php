@@ -4,7 +4,9 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Responsable;
+use Intervention\Image\ImageCache;
 use Intervention\Image\ImageManager;
+use Intervention\Image\ImageManagerStatic;
 use MarcW\RssWriter\Extension\Core\Enclosure;
 use MarcW\RssWriter\Extension\Core\Guid;
 use MarcW\RssWriter\Extension\Core\Item;
@@ -36,25 +38,32 @@ class Photo implements Responsable
      */
     public function toResponse($request)
     {
-        $image = with(new ImageManager())->make($this->path);
+        return response(
+            ImageManagerStatic::configure(['cache' => ['path' => storage_path('framework/cache/data')]])
+                ->cache(function (ImageCache $image) use ($request) {
+                    $image->make($this->path);
 
-        if ($request->width || $request->height) {
-            $image->resize($request->width, $request->height, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
-        }
+                    if ($request->width || $request->height) {
+                        $image->resize($request->width, $request->height, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        });
+                    }
 
-        if ($request->grayscale) {
-            $image->greyscale();
-        }
+                    if ($request->grayscale) {
+                        $image->greyscale();
+                    }
 
-        $image->interlace();
+                    $image->interlace();
 
-        return response($image->encode('jpg', 50), 200, [
-            'Cache-control' => 'private, max-age=604800',
-            'Content-type' => 'image/jpeg',
-        ]);
+                    $image->encode('jpg', 50);
+                }, $this->date->diffInMinutes()),
+            200,
+            [
+                'Content-type' => 'image/jpeg',
+                'Cache-control' => 'private, max-age=' . $this->date->diffInSeconds()
+            ]
+        );
     }
 
     /**
