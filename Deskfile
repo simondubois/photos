@@ -1,0 +1,38 @@
+#/bin/bash
+
+export PATH=$PATH:./vendor/bin:./node_modules/.bin
+export HISTFILE=$HOME/.bash_history_photos
+touch $HISTFILE
+
+function dev-install {
+    # git clone git@github.com:simondubois/photos.git ./
+    composer install
+    cp .env.example .env
+    sed -i "" "s/APP_KEY=.*/APP_KEY="`php -r 'echo md5(uniqid())."\n";'`"/g" .env
+    npm install
+}
+
+function demo-update {
+    ssh $DESK_PHOTOS_DEMO_HOST "cd $DESK_PHOTOS_DEMO_PATH && git fetch"
+    ssh $DESK_PHOTOS_DEMO_HOST "cd $DESK_PHOTOS_DEMO_PATH && git reset origin/master --hard"
+    ssh $DESK_PHOTOS_DEMO_HOST "cd $DESK_PHOTOS_DEMO_PATH && php-7.3 composer install --optimize-autoloader"
+    ssh $DESK_PHOTOS_DEMO_HOST "cd $DESK_PHOTOS_DEMO_PATH && rm storage/framework/views/*.php"
+    open $DESK_PHOTOS_DEMO_URL
+}
+
+function prod-update {
+    ssh $DESK_PHOTOS_PROD_HOST "cd $DESK_PHOTOS_PROD_PATH && git fetch"
+    ssh $DESK_PHOTOS_PROD_HOST "cd $DESK_PHOTOS_PROD_PATH && git reset origin/master --hard"
+    desk_photos_prod_auth
+    ssh $DESK_PHOTOS_PROD_HOST "cd $DESK_PHOTOS_PROD_PATH && php-7.3 composer install --optimize-autoloader --no-dev"
+    ssh $DESK_PHOTOS_PROD_HOST "cd $DESK_PHOTOS_PROD_PATH && rm storage/framework/views/*.php"
+    open $DESK_PHOTOS_PROD_URL
+}
+
+function les-sourires-en-couleur.com-update {
+    ssh $DESK_PHOTOS_LSEC_HOST "cd $DESK_PHOTOS_LSEC_PATH && git fetch"
+    ssh $DESK_PHOTOS_LSEC_HOST "cd $DESK_PHOTOS_LSEC_PATH && git reset origin/master --hard"
+    ssh $DESK_PHOTOS_LSEC_HOST "cd $DESK_PHOTOS_LSEC_PATH && php-7.3 composer install --optimize-autoloader --no-dev"
+    ssh $DESK_PHOTOS_LSEC_HOST "cd $DESK_PHOTOS_LSEC_PATH && rm storage/framework/views/*.php"
+    open $DESK_PHOTOS_LSEC_URL
+}
